@@ -1,0 +1,36 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1547799889694
+Build-Jdk: 1.8.0_181
+Built-By: jesper
+Bundle-Activator: com.github.jespersm.cytoscape.gremlin.internal.CyAct
+ ivator
+Bundle-ManifestVersion: 2
+Bundle-Name: Cytoscape Gremlin Client App
+Bundle-SymbolicName: cytoscape-gremlin
+Bundle-Version: 0.1
+Created-By: Apache Maven Bundle Plugin
+Embed-Dependency: *;scope=compile|runtime;inline=true;artifactId=!osgi
+ ;groupId=!org.cytoscape
+Embed-Transitive: true
+Import-Package: org.cytoscape.application;version="[3.7,4)",org.cytosc
+ ape.application.swing;version="[3.7,4)",org.cytoscape.event;version="
+ [3.7,4)",org.cytoscape.model;version="[3.7,4)",org.cytoscape.service.
+ util;version="[3.7,4)",org.cytoscape.task;version="[3.7,4)",org.cytos
+ cape.view.layout;version="[3.7,4)",org.cytoscape.view.model;version="
+ [3.7,4)",org.cytoscape.view.vizmap;version="[3.7,4)",org.cytoscape.wo
+ rk;version="[3.7,4)",org.cytoscape.work.swing;version="[3.7,4)",org.o
+ sgi.framework;version="[1.5,2)",javax.annotation.processing,javax.cry
+ pto,javax.crypto.spec,javax.lang.model,javax.lang.model.element,javax
+ .lang.model.type,javax.lang.model.util,javax.management,javax.naming,
+ javax.naming.directory,javax.net,javax.net.ssl,javax.print.attribute.
+ standard,javax.script,javax.security.auth,javax.security.auth.callbac
+ k,javax.security.auth.login,javax.security.auth.x500,javax.security.c
+ ert,javax.security.sasl,javax.sql,javax.swing,javax.swing.border,java
+ x.swing.event,javax.swing.filechooser,javax.swing.plaf,javax.swing.pl
+ af.metal,javax.swing.table,javax.swing.text,javax.swing.text.html,jav
+ ax.swing.tree,javax.swing.undo,javax.tools,javax.xml.bind,javax.xml.b
+ ind.annotation,javax.xml.datatype,javax.xml.namespace,javax.xml.strea
+ m,javax.xml.stream.events,javax.xml.stream.util,javax.xml.validation,
+ javax.xml.xpath
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+Tool: Bnd-3.5.0.201709291849

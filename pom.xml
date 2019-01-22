@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+    <groupId>com.github.jespersm</groupId>
+    <artifactId>cytoscape-gremlin</artifactId>
+    <version>0.1</version>
+    <name>Cytoscape Gremlin Client App</name>
+
+	<properties>
+		<cytoscape.api.version>3.7.0</cytoscape.api.version>
+		<cytoscape.impl.version>3.7.0</cytoscape.impl.version>
+		<cytoscape.distribution.version>3.7.0</cytoscape.distribution.version>
+        <bundle.symbolicName>cytoscape-gremlin</bundle.symbolicName>
+        <bundle.namespace>com.github.jespersm.cytoscape.gremlin.internal</bundle.namespace>
+		
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <osgi.api.version>4.2.0</osgi.api.version>
+        <janusgraph.version>0.3.1</janusgraph.version>
+        <tinkerpop.api.version>1.4.0</tinkerpop.api.version>
+        <junit.version>4.12</junit.version>
+        <log4j.version>1.2.17</log4j.version>
+        <maven-bundle-plugin.version>3.5.1</maven-bundle-plugin.version>
+        <mockito-core.version>2.11.0</mockito-core.version>
+<!--         <pitest-maven.version>1.3.2</pitest-maven.version> -->
+        <gson.version>2.8.2</gson.version>
+<!--         <maven-failsafe-plugin.version>2.21.0</maven-failsafe-plugin.version> -->
+<!--         <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version> -->
+<!--         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version> -->
+<!--         <maven-enforcer-plugin.version>3.0.0-M1</maven-enforcer-plugin.version> -->
+    </properties>
+
+	<packaging>bundle</packaging>	
+
+	<repositories>
+		<repository>
+			<id>cytoscape_snapshots</id>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<name>Cytoscape Snapshots</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/snapshots/</url>
+		</repository>
+		
+		<repository>
+			<id>cytoscape_releases</id>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<name>Cytoscape Releases</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/releases/</url>
+		</repository>
+	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<inherited>true</inherited>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<optimize>true</optimize>
+					<showWarnings>true</showWarnings>
+					<showDeprecation>true</showDeprecation>
+					<compilerArguments>
+						<Xmaxwarns>10000</Xmaxwarns>
+						<Xmaxerrs>10000</Xmaxerrs>
+					</compilerArguments>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>${maven-bundle-plugin.version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
+						<Bundle-Version>${project.version}</Bundle-Version>
+						<Export-Package>!${bundle.namespace}.*</Export-Package>
+						<Import-Package>*cytoscape*,*osgi*,!javax.jmdns,!javax.jms,!javax.mail,!javax.mail.internet,!javax.servlet,java*</Import-Package>
+<!-- 						<Import-Package>!com.barchart.udt,!com.barchart.udt.nio,!com.fasterxml.aalto,*</Import-Package> -->
+						<Private-Package>${bundle.namespace}.*</Private-Package>
+						<Bundle-Activator>${bundle.namespace}.CyActivator</Bundle-Activator>
+<!--                         <Embed-Dependency>
+                            gson,gremlin-driver,commons-pool2,groovy,gremlin-shaded,snakeyaml,javatuples,jcabi-manifests,jcabi-log,javapoet,exp4j,jcl-over-slf4j,netty-all,hppc;scope=compile|runtime
+                        </Embed-Dependency>
+                        
+                        snakeyaml,javatuples,jcabi-manifests,jcabi-log,javapoet,exp4j,jcl-over-slf4j,netty-all,hppc,gson,gremlin-driver,commons-pool2
+-->
+                         <Embed-Dependency>*;scope=compile|runtime;inline=true;artifactId=!osgi;groupId=!org.cytoscape</Embed-Dependency>
+                        <Embed-Transitive>true</Embed-Transitive>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>application-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>work-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>service-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>${osgi.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>core-task-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+		</dependency>
+        <dependency>
+            <groupId>org.cytoscape</groupId>
+            <artifactId>swing-application-api</artifactId>
+            <version>${cytoscape.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.cytoscape</groupId>
+            <artifactId>session-api</artifactId>
+            <version>${cytoscape.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.cytoscape</groupId>
+            <artifactId>layout-api</artifactId>
+            <version>${cytoscape.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.cytoscape</groupId>
+            <artifactId>work-swing-api</artifactId>
+            <version>${cytoscape.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+ 
+		<dependency>
+			<groupId>org.apache.tinkerpop</groupId>
+		    <artifactId>gremlin-driver</artifactId>
+		    <version>3.4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-pool2</artifactId>
+			<version>2.6.0</version>
+		</dependency>
+		
+         <dependency>
+            <groupId>org.janusgraph</groupId>
+            <artifactId>janusgraph-core</artifactId>
+            <version>${janusgraph.version}</version>
+        </dependency>
+
+<!--         <dependency> -->
+<!--             <groupId>com.google.code.gson</groupId> -->
+<!--             <artifactId>gson</artifactId> -->
+<!--             <version>${gson.version}</version> -->
+<!--         </dependency> -->
+
+		<!-- Test -->
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito-core.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.cytoscape</groupId>
+            <artifactId>model-impl</artifactId>
+            <version>${cytoscape.api.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.cytoscape</groupId>
+            <artifactId>event-api</artifactId>
+            <version>${cytoscape.api.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+	</dependencies>
+
+<!-- 
+	<scm>
+                <connection>scm:git:git://github.com/cytoscape/cytoscape-app-developer.git</connection>
+                <developerConnection>scm:git:git@github.com:cytoscape/cytoscape-app-developer.git</developerConnection>
+                <url>https://github.com/cytoscape/cytoscape-app-developer.git</url>
+        </scm>
+-->
+</project>
