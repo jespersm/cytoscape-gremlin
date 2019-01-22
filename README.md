@@ -1,5 +1,7 @@
 # Cytoscape plugin for Gremlin
 
+[![CircleCI](https://circleci.com/gh/jespersm/cytoscape-gremlin.svg?style=svg)](https://circleci.com/gh/jespersm/cytoscape-gremlin)
+
 Gremlin Graphs are often too large for Cytoscape: this plugin allows you to write Gremlin queries and import the result as a network. 
 Queries can be parameterized and stored for reuse.  
 
