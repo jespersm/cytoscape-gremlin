@@ -7,7 +7,7 @@ Queries can be parameterized and stored for reuse.
 
 Eventually, the plugin can be downloaded from the [Cytoscape App Store](http://apps.cytoscape.org/apps/cytoscapegremlin) - but not yet.
 
-This app is based on the Cytoscape Neo4j Plugin, but ported to Gremlin by Jesper Steen Møller
+This app is based on the Cytoscape Neo4j Plugin, but ported to Gremlin by Jesper Steen Møller.
 Citation: [Mining functional annotations across species; Sven Warris, Steven Dijkxhoorn, Teije van Sloten, T.L.H. van de Vossenberg, bioRxiv, 2018](https://www.biorxiv.org/content/early/2018/07/16/369785)
 
 ## Features
