@@ -86,7 +86,7 @@ public class CyGremlinGraphIT {
 
         Steps.newInstance(gremlinClient)
                 .givenRandomNetwork()
-                .whenImportQuery("g.V().has(label, 'god')")
+                .whenImportQuery("g.V().has('label', 'mortal')")
                 .thenGraphHas("All nodes should be imported", 3, Steps.Types.NODES)
                 .thenGraphHas("No edges should be imported", 0, Steps.Types.EDGES)
                 .thenNetworkHas(3, Steps.Types.NODES)

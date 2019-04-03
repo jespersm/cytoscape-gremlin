@@ -38,42 +38,63 @@ public class ImportGremlinQueryMenuAction extends AbstractCyAction {
         if (!DialogMethods.connect(services)) {
             return;
         }
-        boolean finished = false;
-        GremlinQueryDialog gremlinQueryDialog = new GremlinQueryDialog(services.getCySwingApplication().getJFrame(), getAllVisualStyleTitle());
+
+        GremlinQueryDialog gremlinQueryDialog =
+                new GremlinQueryDialog(services.getCySwingApplication().getJFrame(), getAllVisualStyleTitle());
+
+        handler_loop:
         do {
             gremlinQueryDialog.showDialog();
-            if (!gremlinQueryDialog.isExecuteQuery()) {
-                finished = true;
-                break;
-            }
-            String query = gremlinQueryDialog.getGremlinQuery();
-            if (query.isEmpty()) {
-                JOptionPane.showMessageDialog(services.getCySwingApplication().getJFrame(), "Query is empty");
-                break;
-            }
-            ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
             try {
-                services.getGremlinClient().explainQuery(scriptQuery);
-                AbstractImportTask executeImportTask =
-                        services.getTaskFactory().createImportQueryTask(
-                                gremlinQueryDialog.getNetwork(),
-                                scriptQuery,
-                                gremlinQueryDialog.getVisualStyleTitle()
-                        );
-                services.getTaskExecutor().execute(executeImportTask);
-                finished = true;
+                switch (gremlinQueryDialog.whichQueryType()) {
+                    case CANCEL:
+                        break handler_loop;
+
+                    case EXECUTE: {
+                        String query = gremlinQueryDialog.getGremlinQuery();
+                        if (query.isEmpty()) {
+                            JOptionPane.showMessageDialog(services.getCySwingApplication().getJFrame(),
+                                    "Query is empty");
+                            break;
+                        }
+                        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
+                        AbstractImportTask executeImportTask =
+                                services.getTaskFactory().createImportQueryTask(
+                                        gremlinQueryDialog.getNetwork(),
+                                        scriptQuery,
+                                        gremlinQueryDialog.getVisualStyleTitle()
+                                );
+                        services.getTaskExecutor().execute(executeImportTask);
+                    } break handler_loop;
+
+                    case EXPLAIN: {
+                        String query = gremlinQueryDialog.getGremlinQuery();
+                        if (query.isEmpty()) {
+                            JOptionPane.showMessageDialog(services.getCySwingApplication().getJFrame(),
+                                    "Query is empty");
+                            break;
+                        }
+                        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
+                        String res = services.getGremlinClient().explainQuery(scriptQuery);
+                        JOptionPane.showMessageDialog(services.getCySwingApplication().getJFrame(),
+                                res);
+                    } break handler_loop;
+
+                    default:
+                        JOptionPane.showMessageDialog(services.getCySwingApplication().getJFrame(),
+                                String.format("Unknown query type %s", gremlinQueryDialog.whichQueryType()));
+
+                }
             } catch (GremlinClientException e1) {
                 JOptionPane.showMessageDialog(services.getCySwingApplication().getJFrame(), e1.getMessage());
             }
-            if (!finished) {
-                gremlinQueryDialog = new GremlinQueryDialog(
-                        services.getCySwingApplication().getJFrame(),
-                        getAllVisualStyleTitle(),
-                        gremlinQueryDialog.getGremlinQuery(),
-                        gremlinQueryDialog.getNetwork()
-                );
-            }
-        } while (!finished);
+            gremlinQueryDialog = new GremlinQueryDialog(
+                    services.getCySwingApplication().getJFrame(),
+                    getAllVisualStyleTitle(),
+                    gremlinQueryDialog.getGremlinQuery(),
+                    gremlinQueryDialog.getNetwork()
+            );
+        } while (true);
     }
 
     private String[] getAllVisualStyleTitle() {

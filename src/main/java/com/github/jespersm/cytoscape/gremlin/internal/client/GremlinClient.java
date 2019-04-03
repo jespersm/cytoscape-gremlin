@@ -162,9 +162,10 @@ public class GremlinClient {
         }
     }
 
-    public void explainQuery(ScriptQuery query) throws GremlinClientException {
+    public String explainQuery(ScriptQuery query) throws GremlinClientException {
         try {
-            // TODO: session.run(query.getExplainQuery(), query.getParams());
+            // session.run(query.getExplainQuery(), query.getParams());
+			return "explainQuery not yet implemented";
         } catch (Exception e) {
             throw new GremlinClientException(e.getMessage(), e);
         }
