@@ -28,4 +28,10 @@ public class GraphMap implements GraphObject {
     public Collection<GraphObject> getAll() {
         return Collections.unmodifiableCollection(results.values());
     }
+
+    public GraphMap merge(GraphMap that) {
+        this.results.forEach(
+                (key, value) -> that.results.merge(key, value, (v1, v2) -> v1));
+        return this;
+    }
 }

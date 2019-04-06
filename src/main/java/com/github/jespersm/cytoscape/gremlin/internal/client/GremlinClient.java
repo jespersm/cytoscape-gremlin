@@ -146,8 +146,8 @@ public class GremlinClient {
     }
 
     public CompletableFuture<Graph> getGraphAsync(ScriptQuery query) {
-    	return executeQueryAsync(query)
-    			.thenApply(result -> result
+		return executeQueryAsync(query)
+		.thenApply(result -> result
     					.stream()
     					.map(gremlinGraphFactory::create)
     					.collect(Collectors.toList()))
@@ -162,13 +162,32 @@ public class GremlinClient {
         }
     }
 
-    public String explainQuery(ScriptQuery query) throws GremlinClientException {
-        try {
-            // session.run(query.getExplainQuery(), query.getParams());
-			return "explainQuery not yet implemented";
-        } catch (Exception e) {
-            throw new GremlinClientException(e.getMessage(), e);
-        }
+
+	public CompletableFuture<Graph> explainQueryAsync(ScriptQuery query) {
+		RequestOptions.Builder builder = RequestOptions.build();
+		if (trimToNull(this.alias) != null) {
+			builder.addAlias("g", this.alias);
+		}
+		query.getParams().forEach((k, v) -> builder.addParameter(k, v));
+
+		CompletableFuture<ResultSet> resultSet =
+				withClient(client -> client.submitAsync(query.getExplainQuery(), builder.create()));
+
+		return resultSet
+				.thenApply(result -> result
+						.stream()
+						.map(gremlinGraphFactory::create)
+						.collect(Collectors.toList()))
+				.thenApply(Graph::createFrom);
+	}
+
+
+	public Graph explainQuery(ScriptQuery query) throws GremlinClientException {
+		try {
+			return explainQueryAsync(query).get();
+		} catch (Exception e) {
+			throw new GremlinClientException(e.getMessage(), e);
+		}
     }
 
     public void close() {

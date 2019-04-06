@@ -1,12 +1,11 @@
 package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import com.github.jespersm.cytoscape.gremlin.internal.Services;
+import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
+import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
+import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.DefaultImportStrategy;
+import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphStrategy;
+import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphToCytoscape;
 import org.codehaus.groovy.util.ListHashMap;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -17,52 +16,38 @@ import org.cytoscape.view.model.View;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskMonitor.Level;
 
-import com.github.jespersm.cytoscape.gremlin.internal.Services;
-import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
-import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
-import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.DefaultImportStrategy;
-import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphStrategy;
-import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphToCytoscape;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public abstract class AbstractExpandNodesTask extends AbstractGremlinNetworkTask {
+public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTask {
     private final ImportGraphStrategy importGraphStrategy;
-    private Direction direction;
 
-	public enum Direction {
-		IN,
-		OUT,
-        BIDIRECTIONAL
-    }
-
-    public AbstractExpandNodesTask(Services services, CyNetwork network, Direction direction) {
+    public AbstractPropertyNodesTask(Services services, CyNetwork network) {
         super(services, network);
         this.importGraphStrategy = new DefaultImportStrategy();
-        this.direction = direction;
     }
 
     abstract Stream<CyRow> getNodeRows();
         
     public void run(TaskMonitor taskMonitor) throws Exception {
-        taskMonitor.setTitle("Expanding multiple nodes");
+        taskMonitor.setTitle("Getting node properties");
 
         List<Integer> ids = getNodeRows()
         		.map(row -> row.get(this.importGraphStrategy.getRefIDName(),String.class))
                 .map(val -> Integer.parseInt(val) )
-                .collect(Collectors.toList());
+        		.collect(Collectors.toList());
 
         if (ids.isEmpty()) {
             taskMonitor.showMessage(Level.ERROR, "No nodes selected?");
             return;
         }
-        String query = new StringBuilder()
-                .append("g.V(ids).as('v').")
-                .append(edgeDirectionQuery())
-                .append(".as('e').otherV().as('o').select('v','e','o')")
-                .toString();
 
-        Map<String,Object> params = new ListHashMap<>();
-        params.put("ids", ids);
-        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).params(params).build();
+        String query = "g.V(ids).as('v').valueMap()";
+        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).params("ids", ids).build();
         Graph graph = waitForRespose(scriptQuery, taskMonitor);
 
         taskMonitor.setStatusMessage("Importing from Gremlin server");
@@ -75,23 +60,7 @@ public abstract class AbstractExpandNodesTask extends AbstractGremlinNetworkTask
 //        reLayout();
     }
 
-	private String edgeDirectionQuery() {
-		String dir = "kaboom";
-        switch (this.direction) {
-        case IN:
-        	dir = "inE()";
-            break;
-        case OUT:
-        	dir = "outE()";
-            break;
-		default:
-			dir = "bothE()";
-			break;
-        }
-		return dir;
-	}
-
-	protected void reLayout() {
+		protected void reLayout() {
 		for (CyNetworkView cyNetworkView : this.services.getCyNetworkViewManager().getNetworkViews(network)) {
             services.getVisualMappingManager().getVisualStyle(cyNetworkView).apply(cyNetworkView);
             CyLayoutAlgorithm layout = services.getCyLayoutAlgorithmManager().getDefaultLayout();

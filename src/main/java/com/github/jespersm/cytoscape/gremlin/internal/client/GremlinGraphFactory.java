@@ -5,18 +5,12 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
+import com.github.jespersm.cytoscape.gremlin.internal.graph.*;
 import org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
-
-import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphEdge;
-import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphNode;
-import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphObject;
-import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphObjectList;
-import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphSimple;
 
 class GremlinGraphFactory {
 
@@ -29,17 +23,25 @@ class GremlinGraphFactory {
         } else if (value instanceof List) {
             return create((List<Object>)value);
         } else if (value instanceof Map) {
-            return create(((Map)value).values());
+            return create(((Map<String,Object>)value));
         } else {
             return new GraphSimple(value);
         }
     }
 
-    private GraphObject create(Collection<Object> objects) {
+    private GraphObject create(Map<String,Object> elements) {
+        return elements.entrySet().stream()
+                .filter(e -> e.getValue() instanceof Element)
+                .collect(GraphMap::new,
+                        (map, el) -> map.add(el.getKey(), this.create((Element)el.getValue())),
+                        (map1, map2) -> map1.merge(map2));
+    }
+
+    private GraphObject create(List<Object> objects) {
         return objects.stream()
                 .filter(o -> o instanceof Element)
                 .map(o -> this.create((Element) o))
-                .collect(GraphObjectList::new, (list, o) -> list.add(o), (list1, list2) -> list1.addAll(list2));
+                .collect(GraphList::new, (list, o) -> list.add(o), (list1, list2) -> list1.addAll(list2));
     }
 
     private GraphObject create(Element entity) {

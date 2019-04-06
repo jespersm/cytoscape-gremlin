@@ -1,9 +1,11 @@
 package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
+import com.github.jespersm.cytoscape.gremlin.internal.Services;
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinClientException;
+import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
+import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
+import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphStrategy;
+import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphToCytoscape;
 import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -14,24 +16,21 @@ import org.cytoscape.view.model.View;
 import org.cytoscape.view.vizmap.VisualStyle;
 import org.cytoscape.work.TaskMonitor;
 
-import com.github.jespersm.cytoscape.gremlin.internal.Services;
-import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinClientException;
-import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
-import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
-import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphStrategy;
-import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphToCytoscape;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class imports the results of a cyher query into cytoscape.
  */
-public abstract class AbstractImportTask extends AbstractGremlinTask {
+public abstract class AbstractExplainTask extends AbstractGremlinTask {
 
     private final String networkName;
     private final String visualStyleTitle;
     private final ImportGraphStrategy importGraphStrategy;
     private final ScriptQuery scriptQuery;
 
-    public AbstractImportTask(Services services, String networkName, String visualStyleTitle, ImportGraphStrategy importGraphStrategy, ScriptQuery scriptQuery) {
+    public AbstractExplainTask(Services services, String networkName, String visualStyleTitle, ImportGraphStrategy importGraphStrategy, ScriptQuery scriptQuery) {
         super(services);
         this.networkName = networkName;
         this.visualStyleTitle = visualStyleTitle;
@@ -44,7 +43,6 @@ public abstract class AbstractImportTask extends AbstractGremlinTask {
         try {
 
             taskMonitor.setStatusMessage("Execute query");
-            // explainQuery(scriptQuery);
 
             Graph graph = waitForRespose(scriptQuery, taskMonitor);
 

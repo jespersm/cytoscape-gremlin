@@ -20,7 +20,8 @@ import com.github.jespersm.cytoscape.gremlin.internal.ui.DialogMethods;
 @SuppressWarnings("serial")
 public class GremlinQueryDialog extends JDialog { //NOSONAR, hierarchy > 5
 
-    private static final String INITIAL_QUERY = "g.V().has('name', 'Port1')";
+    // private static final String INITIAL_QUERY = "g.V().has('name', 'Port1').valueMap('name').with(WithOptions.tokens)";
+    private static final String INITIAL_QUERY = "g.V().has('name', 'Port1').toList()";
     private String scriptQuery;
     private QType qtype;
     private final String[] visualStyles;

@@ -96,7 +96,7 @@ public class ExpandNodeViewTask extends AbstractGremlinTask implements ActionLis
     @Override
     public void run(TaskMonitor taskMonitor) throws Exception {
 
-        taskMonitor.setTitle("Expanding node");
+        taskMonitor.setTitle("Expanding a single node");
     }
 
     private Graph getGraph(ScriptQuery query) {
