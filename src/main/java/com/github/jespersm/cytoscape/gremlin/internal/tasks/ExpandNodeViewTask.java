@@ -75,10 +75,8 @@ public class ExpandNodeViewTask extends AbstractGremlinTask implements ActionLis
 		}
 		ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
 		
-        CompletableFuture<Graph> result = CompletableFuture.supplyAsync(() -> getGraph(scriptQuery));
-        waitForRespose(scriptQuery, null);
-
-        Graph graph = result.get();
+        Graph graph = waitForGraph(null, scriptQuery,
+				"problem connecting to server");
 
         ImportGraphToCytoscape importer = new ImportGraphToCytoscape(this.netView.getModel(), importGraphStrategy, () -> this.cancelled);
 
@@ -97,14 +95,6 @@ public class ExpandNodeViewTask extends AbstractGremlinTask implements ActionLis
     public void run(TaskMonitor taskMonitor) throws Exception {
 
         taskMonitor.setTitle("Expanding a single node");
-    }
-
-    private Graph getGraph(ScriptQuery query) {
-        try {
-            return services.getGremlinClient().getGraph(query);
-        } catch (GremlinClientException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
     }
 
     @Override

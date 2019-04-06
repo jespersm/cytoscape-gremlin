@@ -6,6 +6,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.cytoscape.application.swing.CyMenuItem;
 import org.cytoscape.application.swing.CyNodeViewContextMenuFactory;
@@ -66,19 +67,28 @@ public class ExpandNodeLabelMenuAction implements CyNodeViewContextMenuFactory {
             this.direction = Direction.BIDIRECTIONAL;
             String query = "match (n)-[]-(r) where ID(n) = " + refid + " return distinct labels(r) as r";
             ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
-            List<Result> result = this.services.getGremlinClient().executeQuery(scriptQuery);
+            List<Result> result = this.services.getGremlinClient()
+                    .executeQueryAsync(scriptQuery)
+                    .thenCompose(ResultSet::all)
+                    .get();
             result.forEach(this::addMenuItemsNodes);
 
             direction = Direction.IN;
             query = "match (n)<-[]-(r) where ID(n) = " + refid + " return distinct labels(r) as r";
             scriptQuery = ScriptQuery.builder().query(query).build();
-            result = this.services.getGremlinClient().executeQuery(scriptQuery);
+            result = this.services.getGremlinClient()
+                    .executeQueryAsync(scriptQuery)
+                    .thenCompose(ResultSet::all)
+                    .get();
             result.forEach(this::addMenuItemsNodes);
 
             this.direction = Direction.OUT;
             query = "match (n)-[]->(r) where ID(n) = " + refid + " return distinct labels(r) as r";
             scriptQuery = ScriptQuery.builder().query(query).build();
-            result = this.services.getGremlinClient().executeQuery(scriptQuery);
+            result = this.services.getGremlinClient()
+                    .executeQueryAsync(scriptQuery)
+                    .thenCompose(ResultSet::all)
+                    .get();
             result.forEach(this::addMenuItemsNodes);
 
 
@@ -86,7 +96,7 @@ public class ExpandNodeLabelMenuAction implements CyNodeViewContextMenuFactory {
 
             return cyMenuItem;
 
-        } catch (GremlinClientException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.out.println(e.getMessage());
         }

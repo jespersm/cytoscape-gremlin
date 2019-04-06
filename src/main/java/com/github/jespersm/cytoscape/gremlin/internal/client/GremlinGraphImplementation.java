@@ -193,9 +193,9 @@ public final class GremlinGraphImplementation implements GraphImplementation {
 
     private void executeQuery(ScriptQuery theQuery) throws GraphImplementationException {
     	try {
-            gremlinClient.executeQuery(theQuery);
-        } catch (GremlinClientException e) {
-            throw new GraphImplementationException(e);
+            gremlinClient.executeQueryAsync(theQuery);
+        } catch (Exception ex) {
+            throw new GraphImplementationException(ex);
         }
     }
 

@@ -15,6 +15,10 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 class GremlinGraphFactory {
 
     GraphObject create(Result result) {
+        GraphObject ret = createutil(result);
+        return ret;
+    }
+    GraphObject createutil(Result result) {
     	Object value = result.getObject(); 
         if (value instanceof Vertex) {
             return create(result.getVertex());
@@ -31,9 +35,11 @@ class GremlinGraphFactory {
 
     private GraphObject create(Map<String,Object> elements) {
         return elements.entrySet().stream()
-                .filter(e -> e.getValue() instanceof Element)
                 .collect(GraphMap::new,
-                        (map, el) -> map.add(el.getKey(), this.create((Element)el.getValue())),
+                        (map, el) ->
+                                map.add(
+                                        el.getKey().toString(),
+                                        this.create((Element)el.getValue())),
                         (map1, map2) -> map1.merge(map2));
     }
 

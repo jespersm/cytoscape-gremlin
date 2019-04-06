@@ -19,6 +19,7 @@ import org.cytoscape.work.TaskMonitor;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This class imports the results of a cyher query into cytoscape.
@@ -44,7 +45,8 @@ public abstract class AbstractExplainTask extends AbstractGremlinTask {
 
             taskMonitor.setStatusMessage("Execute query");
 
-            Graph graph = waitForRespose(scriptQuery, taskMonitor);
+            Graph graph = waitForGraph(taskMonitor, scriptQuery,
+                    "problem connecting to server");
 
             taskMonitor.setTitle("Importing the Gremlin Graph " + networkName);
 
@@ -92,7 +94,11 @@ public abstract class AbstractExplainTask extends AbstractGremlinTask {
     }
 
     private void explainQuery(ScriptQuery scriptQuery) throws GremlinClientException {
-        services.getGremlinClient().explainQuery(scriptQuery);
+        try {
+            services.getGremlinClient().explainQueryAsync(scriptQuery).get();
+        } catch (Exception ex) {
+            throw new GremlinClientException(ex.getMessage(), ex);
+        }
     }
 
 }

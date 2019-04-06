@@ -20,15 +20,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTask {
     private final ImportGraphStrategy importGraphStrategy;
+    private final ImportGraphToCytoscape importer;
 
     public AbstractPropertyNodesTask(Services services, CyNetwork network) {
         super(services, network);
         this.importGraphStrategy = new DefaultImportStrategy();
+        this.importer = new ImportGraphToCytoscape(this.network, this.importGraphStrategy, () -> this.cancelled);
     }
 
     abstract Stream<CyRow> getNodeRows();
@@ -46,21 +50,27 @@ public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTa
             return;
         }
 
-        String query = "g.V(ids).as('v').valueMap()";
-        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).params("ids", ids).build();
-        Graph graph = waitForRespose(scriptQuery, taskMonitor);
+        String query = new StringBuilder("g.V(ids).as('v')")
+                .append(".valueMap().with(WithOptions.tokens).as('p')")
+                .append(".select('v','p').toList()")
+                .toString();
+        ScriptQuery scriptQuery = ScriptQuery.builder()
+                .query(query)
+                .params("ids", ids)
+                .build();
+
+        Graph graph = waitForGraph(taskMonitor, scriptQuery,
+                "Error getting data from the Gremlin Server");
 
         taskMonitor.setStatusMessage("Importing from Gremlin server");
-        ImportGraphToCytoscape importer = new ImportGraphToCytoscape(this.network, importGraphStrategy, () -> this.cancelled);
-
-        importer.importGraph(graph);
+        this.importer.importGraph(graph);
 
         updateView();
 
 //        reLayout();
     }
 
-		protected void reLayout() {
+    protected void reLayout() {
 		for (CyNetworkView cyNetworkView : this.services.getCyNetworkViewManager().getNetworkViews(network)) {
             services.getVisualMappingManager().getVisualStyle(cyNetworkView).apply(cyNetworkView);
             CyLayoutAlgorithm layout = services.getCyLayoutAlgorithmManager().getDefaultLayout();

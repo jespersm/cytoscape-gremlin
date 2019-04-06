@@ -133,35 +133,25 @@ public class GremlinClient {
 		}
 	}
 
+	/**
+	 * Check all the conditions where the cluster is not open.
+	 * @return
+	 */
 	public boolean isConnected() {
-        return cluster != null && ! (cluster.isClosed() || cluster.isClosing());
-    }
-    
-    public List<Result> executeQuery(ScriptQuery query) throws GremlinClientException {
-        try {
-        	return executeQueryAsync(query).thenCompose(ResultSet::all).get();
-        } catch (Exception e) {
-            throw new GremlinClientException(e.getMessage(), e);
-        }
+    	if (cluster == null) return false;
+    	if (cluster.isClosed()) return false;
+    	if (cluster.isClosing()) return false;
+    	return true;
     }
 
     public CompletableFuture<Graph> getGraphAsync(ScriptQuery query) {
 		return executeQueryAsync(query)
-		.thenApply(result -> result
+				.thenApply(result -> result
     					.stream()
     					.map(gremlinGraphFactory::create)
     					.collect(Collectors.toList()))
     			.thenApply(Graph::createFrom);
     }
-
-    public Graph getGraph(ScriptQuery query) throws GremlinClientException {
-        try {
-        	return getGraphAsync(query).get();
-        } catch (Exception e) {
-            throw new GremlinClientException(e.getMessage(), e);
-        }
-    }
-
 
 	public CompletableFuture<Graph> explainQueryAsync(ScriptQuery query) {
 		RequestOptions.Builder builder = RequestOptions.build();
@@ -181,14 +171,6 @@ public class GremlinClient {
 				.thenApply(Graph::createFrom);
 	}
 
-
-	public Graph explainQuery(ScriptQuery query) throws GremlinClientException {
-		try {
-			return explainQueryAsync(query).get();
-		} catch (Exception e) {
-			throw new GremlinClientException(e.getMessage(), e);
-		}
-    }
 
     public void close() {
         if (isConnected()) {

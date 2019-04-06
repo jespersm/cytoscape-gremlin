@@ -5,6 +5,7 @@ package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,10 +55,17 @@ public class ConnectNodesTask extends AbstractGremlinNetworkTask {
             taskMonitor.showMessage(Level.ERROR, "No nodes selected?");
             return;
         }
-        String query = "g.V(idsQuery).bothE().where(__.otherV().hasId(idsQuery)).dedup()";
-        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).params("idsQuery", idsQuery).build();
+        String query = new StringBuilder("g.V(idsQuery).as('v')")
+                .append(".bothE().where(__.otherV().hasId(idsQuery))")
+                .append(".dedup()")
+                .toString();
+        ScriptQuery scriptQuery = ScriptQuery.builder()
+                .query(query)
+                .params("idsQuery", idsQuery)
+                .build();
 
-        Graph graph = waitForRespose(scriptQuery, taskMonitor);
+        Graph graph = waitForGraph(taskMonitor, scriptQuery,
+                "problem connecting to server");
 
         taskMonitor.setStatusMessage("Importing the Gremlin Graph");
         ImportGraphToCytoscape importer = new ImportGraphToCytoscape(this.network, importGraphStrategy, () -> this.cancelled);
@@ -65,14 +73,6 @@ public class ConnectNodesTask extends AbstractGremlinNetworkTask {
         importer.importGraph(graph);
 
         updateView();
-    }
-
-    private Graph getGraph(ScriptQuery query) {
-        try {
-            return services.getGremlinClient().getGraph(query);
-        } catch (GremlinClientException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
     }
 
 }

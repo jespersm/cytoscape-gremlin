@@ -47,10 +47,10 @@ public class ExportNetworkToGremlinTask extends AbstractTask {
                 );
                 Command command = getScriptQuery(cyNetwork).map(scriptQuery -> {
                     try {
-                        Graph grapInDb = services.getGremlinClient().getGraph(scriptQuery);
+                        Graph grapInDb = services.getGremlinClient().getGraphAsync(scriptQuery).get();
                         return ExportDifference.create(grapInDb, cyNetwork, graphImplementation).compute();
-                    } catch (GremlinClientException e) {
-                        throw new IllegalStateException(e);
+                    } catch (Exception ex) {
+                        throw new IllegalStateException(ex);
                     }
                 }).orElseGet(() -> ExportNew.create(cyNetwork, graphImplementation).compute());
 
