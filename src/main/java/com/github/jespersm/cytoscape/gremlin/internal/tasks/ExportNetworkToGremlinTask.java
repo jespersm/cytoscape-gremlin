@@ -2,6 +2,7 @@ package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
 import java.util.Optional;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
@@ -47,7 +48,9 @@ public class ExportNetworkToGremlinTask extends AbstractTask {
                 );
                 Command command = getScriptQuery(cyNetwork).map(scriptQuery -> {
                     try {
-                        Graph grapInDb = services.getGremlinClient().getGraphAsync(scriptQuery).get();
+                        Graph grapInDb = services.getGremlinClient()
+                                .getGraphAsync(scriptQuery, new GremlinGraphFactory())
+                                .get();
                         return ExportDifference.create(grapInDb, cyNetwork, graphImplementation).compute();
                     } catch (Exception ex) {
                         throw new IllegalStateException(ex);

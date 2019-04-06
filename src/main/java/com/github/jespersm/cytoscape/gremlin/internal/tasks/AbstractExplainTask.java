@@ -2,6 +2,7 @@ package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
 import com.github.jespersm.cytoscape.gremlin.internal.Services;
 import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinClientException;
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
 import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphStrategy;
@@ -45,7 +46,7 @@ public abstract class AbstractExplainTask extends AbstractGremlinTask {
 
             taskMonitor.setStatusMessage("Execute query");
 
-            Graph graph = waitForGraph(taskMonitor, scriptQuery,
+            Graph graph = waitForGraph(taskMonitor, scriptQuery, new GremlinGraphFactory(),
                     "problem connecting to server");
 
             taskMonitor.setTitle("Importing the Gremlin Graph " + networkName);
@@ -95,7 +96,9 @@ public abstract class AbstractExplainTask extends AbstractGremlinTask {
 
     private void explainQuery(ScriptQuery scriptQuery) throws GremlinClientException {
         try {
-            services.getGremlinClient().explainQueryAsync(scriptQuery).get();
+            services.getGremlinClient()
+                    .explainQueryAsync(scriptQuery, new GremlinGraphFactory())
+                    .get();
         } catch (Exception ex) {
             throw new GremlinClientException(ex.getMessage(), ex);
         }

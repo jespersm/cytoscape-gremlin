@@ -1,6 +1,8 @@
 package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
 import com.github.jespersm.cytoscape.gremlin.internal.Services;
+import com.github.jespersm.cytoscape.gremlin.internal.client.AbstractGremlinGraphFactory;
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
 import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.DefaultImportStrategy;
@@ -36,7 +38,19 @@ public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTa
     }
 
     abstract Stream<CyRow> getNodeRows();
-        
+
+    /**
+     * The queries make use of "parameterized scripts"
+     * see http://tinkerpop.apache.org/docs/current/reference/#parameterized-scripts
+     * This also makes in unnecessary to quote the vertex ids (for injection into a query string).
+     *
+     * The problem being resolved here is the case where a node does not have its properties.
+     * This query gets a list of vertices and their properties and updates the graph with them.
+     *
+     *
+     * @param taskMonitor
+     * @throws Exception
+     */
     public void run(TaskMonitor taskMonitor) throws Exception {
         taskMonitor.setTitle("Getting node properties");
 
@@ -54,12 +68,14 @@ public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTa
                 .append(".valueMap().with(WithOptions.tokens).as('p')")
                 .append(".select('v','p').toList()")
                 .toString();
+
         ScriptQuery scriptQuery = ScriptQuery.builder()
                 .query(query)
                 .params("ids", ids)
                 .build();
 
-        Graph graph = waitForGraph(taskMonitor, scriptQuery,
+        AbstractGremlinGraphFactory ggf = new GremlinGraphFactory();
+        Graph graph = waitForGraph(taskMonitor, scriptQuery, ggf,
                 "Error getting data from the Gremlin Server");
 
         taskMonitor.setStatusMessage("Importing from Gremlin server");

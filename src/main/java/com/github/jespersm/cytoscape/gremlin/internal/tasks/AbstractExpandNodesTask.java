@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.codehaus.groovy.util.ListHashMap;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -66,7 +67,7 @@ public abstract class AbstractExpandNodesTask extends AbstractGremlinNetworkTask
                 .toString();
 
         ScriptQuery scriptQuery = ScriptQuery.builder().query(query).params("ids",ids).build();
-        Graph graph = waitForGraph(taskMonitor, scriptQuery,
+        Graph graph = waitForGraph(taskMonitor, scriptQuery, new GremlinGraphFactory(),
                 "problem connecting to server");
 
         taskMonitor.setStatusMessage("Importing from Gremlin server");

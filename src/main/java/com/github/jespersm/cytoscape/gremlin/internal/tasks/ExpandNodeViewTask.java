@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.view.layout.CyLayoutAlgorithm;
 import org.cytoscape.view.model.CyNetworkView;
@@ -75,7 +76,7 @@ public class ExpandNodeViewTask extends AbstractGremlinTask implements ActionLis
 		}
 		ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
 		
-        Graph graph = waitForGraph(null, scriptQuery,
+        Graph graph = waitForGraph(null, scriptQuery, new GremlinGraphFactory(),
 				"problem connecting to server");
 
         ImportGraphToCytoscape importer = new ImportGraphToCytoscape(this.netView.getModel(), importGraphStrategy, () -> this.cancelled);

@@ -1,5 +1,6 @@
 package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.task.AbstractNetworkTask;
@@ -63,7 +64,7 @@ public class ShortestPathTask extends AbstractGremlinNetworkTask implements Task
 
         ScriptQuery script = ScriptQuery.builder().query(query).build();
 
-        Graph graph = waitForGraph(taskMonitor, script,
+        Graph graph = waitForGraph(taskMonitor, script, new GremlinGraphFactory(),
                 "Could not find shortest path(s). Are you still connected to the database?");
 
         taskMonitor.setStatusMessage("Importing the Gremlin Graph");

@@ -144,16 +144,18 @@ public class GremlinClient {
     	return true;
     }
 
-    public CompletableFuture<Graph> getGraphAsync(ScriptQuery query) {
+    public CompletableFuture<Graph> getGraphAsync(ScriptQuery query, AbstractGremlinGraphFactory creator) {
 		return executeQueryAsync(query)
 				.thenApply(result -> result
     					.stream()
-    					.map(gremlinGraphFactory::create)
+    					.map(r -> creator.create(r))
     					.collect(Collectors.toList()))
     			.thenApply(Graph::createFrom);
     }
 
-	public CompletableFuture<Graph> explainQueryAsync(ScriptQuery query) {
+	public CompletableFuture<Graph>
+		explainQueryAsync(ScriptQuery query, AbstractGremlinGraphFactory creator)
+	{
 		RequestOptions.Builder builder = RequestOptions.build();
 		if (trimToNull(this.alias) != null) {
 			builder.addAlias("g", this.alias);
@@ -166,7 +168,7 @@ public class GremlinClient {
 		return resultSet
 				.thenApply(result -> result
 						.stream()
-						.map(gremlinGraphFactory::create)
+						.map(r -> creator.create(r))
 						.collect(Collectors.toList()))
 				.thenApply(Graph::createFrom);
 	}

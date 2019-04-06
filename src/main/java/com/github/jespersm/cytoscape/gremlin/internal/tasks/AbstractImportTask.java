@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.cytoscape.event.CyEventHelper;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -47,7 +48,7 @@ public abstract class AbstractImportTask extends AbstractGremlinTask {
             taskMonitor.setStatusMessage("Execute query");
             // explainQuery(scriptQuery);
 
-            Graph graph = waitForGraph(taskMonitor, scriptQuery,
+            Graph graph = waitForGraph(taskMonitor, scriptQuery, new GremlinGraphFactory(),
                     "problem connecting to server");
 
             taskMonitor.setTitle("Importing the Gremlin Graph " + networkName);
@@ -97,7 +98,9 @@ public abstract class AbstractImportTask extends AbstractGremlinTask {
 
     private void explainQuery(ScriptQuery scriptQuery) throws GremlinClientException {
         try {
-            services.getGremlinClient().explainQueryAsync(scriptQuery).get();
+            services.getGremlinClient()
+                    .explainQueryAsync(scriptQuery, new GremlinGraphFactory())
+                    .get();
         } catch (Exception ex) {
             throw new GremlinClientException(ex.getMessage(), ex);
         }
