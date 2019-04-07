@@ -5,9 +5,14 @@ import com.github.jespersm.cytoscape.gremlin.internal.client.AbstractGremlinGrap
 import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
 import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
+import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphObject;
+import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphSimple;
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.DefaultImportStrategy;
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphStrategy;
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGraphToCytoscape;
+import org.apache.tinkerpop.gremlin.driver.Result;
+import org.apache.tinkerpop.gremlin.structure.Element;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.codehaus.groovy.util.ListHashMap;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -74,8 +79,8 @@ public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTa
                 .params("ids", ids)
                 .build();
 
-        AbstractGremlinGraphFactory ggf = new GremlinGraphFactory();
-        Graph graph = waitForGraph(taskMonitor, scriptQuery, ggf,
+
+        Graph graph = waitForGraph(taskMonitor, scriptQuery,  new PropertyGraphFactory(),
                 "Error getting data from the Gremlin Server");
 
         taskMonitor.setStatusMessage("Importing from Gremlin server");
@@ -84,6 +89,28 @@ public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTa
         updateView();
 
 //        reLayout();
+    }
+
+
+    static class PropertyGraphFactory implements  AbstractGremlinGraphFactory {
+
+        @Override
+        public GraphObject create(Result result) {
+            Object ro = result.getObject();
+            if (!(ro instanceof Map)) { return new GraphSimple(""); }
+            Map<String,Object> r = (Map<String,Object>) ro;
+
+            Object vo = r.get("v");
+            if (!(vo instanceof Vertex)) { return new GraphSimple("");  }
+
+            Object po = r.get("p");
+            if (!(po instanceof Map)) { return new GraphSimple(""); }
+
+            GraphObject r2 =  AbstractGremlinGraphFactory
+                    .create((Vertex) vo,
+                            (Map<String,Object>) po);
+            return r2;
+        }
     }
 
     protected void reLayout() {

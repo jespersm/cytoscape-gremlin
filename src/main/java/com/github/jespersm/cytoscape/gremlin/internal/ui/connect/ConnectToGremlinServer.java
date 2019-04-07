@@ -44,7 +44,8 @@ public class ConnectToGremlinServer {
         if (connectDialog.isOk()) {
             appConfiguration.setConnectionParameters(connectDialog.getHostname(), connectDialog.getUsername(), connectDialog.getPort());
             appConfiguration.save();
-            JOptionPane.showMessageDialog(this.cySwingApplication.getJFrame(), "Connected");
+        } else {
+            JOptionPane.showMessageDialog(this.cySwingApplication.getJFrame(), "Not Connected");
         }
         return gremlinClient.isConnected();
     }
