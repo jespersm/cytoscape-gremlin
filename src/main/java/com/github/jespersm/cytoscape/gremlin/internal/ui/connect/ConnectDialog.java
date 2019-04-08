@@ -129,9 +129,9 @@ class ConnectDialog extends JDialog { //NOSONAR , hierarchy level > 5
     }
 
     public static void main(String[] args) {
-        ConnectDialog connectDialog = new ConnectDialog(null, new GremlinClient()::connect, "localhost", "", 8182);
+        ConnectDialog connectDialog =
+                new ConnectDialog(null, new GremlinClient(null)::connect, "localhost", "", 8182);
         connectDialog.showConnectDialog();
-
     }
 
     public String getHostname() {

@@ -31,7 +31,7 @@ public class ImportGraphToCytoscape {
      */
     public void importGraph(Graph graph) {
         CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            importGraphStrategy.createTables(network);
+            importGraphStrategy.createTables(network, graph);
             importGraphStrategy.copyGraph(network, graph);
             importGraphStrategy.postProcess(network);
         });

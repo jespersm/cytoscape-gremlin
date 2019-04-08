@@ -50,9 +50,6 @@ public class GraphNode implements GraphObject {
         return label;
     }
 
-    public Object getProperty(String key) {
-        return properties.get(key);
-    }
 
     public <T> Optional<T> getProperty(String key, Class<T> clz) {
         if (key != null && clz != null) {
@@ -62,22 +59,6 @@ public class GraphNode implements GraphObject {
             }
         }
         return Optional.empty();
-    }
-
-    public <T> Optional<T> getProperty(String key, Function<Object, T> fn) {
-        if (key != null && fn != null) {
-            Object value = properties.get(key);
-            if (value != null) {
-                return Optional.of(fn.apply(value));
-            }
-        }
-        return Optional.empty();
-    }
-
-    public void ifLabelPresent(String label, Consumer<String> consumer) {
-        if (this.label != null && this.label.equalsIgnoreCase(label)) {
-        	consumer.accept(this.label);
-        }
     }
 
     @Override

@@ -10,7 +10,8 @@ import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphNode;
  * This interface specifies an import strategy for copying nodes and edges from Gremlin to Cytoscape.
  */
 public interface ImportGraphStrategy {
-    void createTables(CyNetwork network);
+
+    void createTables(CyNetwork network, Graph graph);
 
     default void copyGraph(CyNetwork network, Graph graph) {
         graph.nodes().forEach(node -> copyNode(network, node));

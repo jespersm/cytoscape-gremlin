@@ -179,7 +179,7 @@ public class CyActivator extends AbstractCyActivator {
         services.setVisualMappingManager(getService(context, VisualMappingManager.class));
         services.setCyEventHelper(getService(context, CyEventHelper.class));
         services.setVisualStyleFactory(getService(context, VisualStyleFactory.class));
-        services.setGremlinClient(new GremlinClient());
+        services.setGremlinClient(new GremlinClient(services));
         services.setTaskFactory(TaskFactory.create(services));
         services.setTaskExecutor(TaskExecutor.create(services));
         return services;

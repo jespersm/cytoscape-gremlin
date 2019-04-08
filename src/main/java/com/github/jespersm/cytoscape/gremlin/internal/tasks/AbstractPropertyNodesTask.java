@@ -5,6 +5,7 @@ import com.github.jespersm.cytoscape.gremlin.internal.client.AbstractGremlinGrap
 import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import com.github.jespersm.cytoscape.gremlin.internal.client.ScriptQuery;
 import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
+import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphNode;
 import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphObject;
 import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphSimple;
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.DefaultImportStrategy;
@@ -23,10 +24,7 @@ import org.cytoscape.view.model.View;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskMonitor.Level;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -106,10 +104,17 @@ public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTa
             Object po = r.get("p");
             if (!(po instanceof Map)) { return new GraphSimple(""); }
 
-            GraphObject r2 =  AbstractGremlinGraphFactory
-                    .create((Vertex) vo,
-                            (Map<String,Object>) po);
-            return r2;
+            Vertex v = (Vertex) vo;
+            Map<String,Object> p = (Map<String,Object>) po;
+
+            Map<String,Object> q = new HashMap<>(p.size());
+            for (Map.Entry ent : p.entrySet()) {
+                if (ent.getKey().toString().equals("id")) continue;
+                if (ent.getKey().toString().equals("label")) continue;
+                Object value = ((List)ent.getValue()).get(0);
+                q.put(ent.getKey().toString(), value);
+            }
+            return  AbstractGremlinGraphFactory.create(v, q);
         }
     }
 
