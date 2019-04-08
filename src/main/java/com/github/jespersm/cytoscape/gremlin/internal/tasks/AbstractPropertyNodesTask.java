@@ -90,6 +90,11 @@ public abstract class AbstractPropertyNodesTask extends AbstractGremlinNetworkTa
     }
 
 
+    /**
+     * When properties are retrieved via Gremlin they may be multi-valued.
+     * Cytoscape does not support multi-valued objects (I think) so only
+     * the first element is retained.
+     */
     static class PropertyGraphFactory implements  AbstractGremlinGraphFactory {
 
         @Override

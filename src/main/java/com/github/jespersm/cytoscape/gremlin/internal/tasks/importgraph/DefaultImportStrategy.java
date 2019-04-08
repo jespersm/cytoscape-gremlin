@@ -87,14 +87,17 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
 
     }
 
+    /**
+     * When saving a node into the network the node may already exist.
+     * If that is the case the node is updated with its properties.
+     * Properties are not deleted but are over written.
+     *
+     * @param network
+     * @param graphNode
+     */
     private void saveNode(CyNetwork network, GraphNode graphNode) {
 
         String nodeId = graphNode.getProperties().getOrDefault(REF_ID, graphNode.getId()).toString();
-
-        //
-        // if (nodeExists(network, nodeId)) {
-        //    return;
-        //}
 
         CyTable cyTable = network.getDefaultNodeTable();
         CyNode cyNode = getOrCreateNode(network, nodeId);
