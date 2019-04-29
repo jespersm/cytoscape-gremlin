@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.view.layout.CyLayoutAlgorithm;
 import org.cytoscape.view.model.CyNetworkView;
@@ -75,10 +76,8 @@ public class ExpandNodeViewTask extends AbstractGremlinTask implements ActionLis
 		}
 		ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
 		
-        CompletableFuture<Graph> result = CompletableFuture.supplyAsync(() -> getGraph(scriptQuery));
-        waitForRespose(scriptQuery, null);
-
-        Graph graph = result.get();
+        Graph graph = waitForGraph(null, scriptQuery, new GremlinGraphFactory(),
+				"problem connecting to server");
 
         ImportGraphToCytoscape importer = new ImportGraphToCytoscape(this.netView.getModel(), importGraphStrategy, () -> this.cancelled);
 
@@ -96,15 +95,7 @@ public class ExpandNodeViewTask extends AbstractGremlinTask implements ActionLis
     @Override
     public void run(TaskMonitor taskMonitor) throws Exception {
 
-        taskMonitor.setTitle("Expanding node");
-    }
-
-    private Graph getGraph(ScriptQuery query) {
-        try {
-            return services.getGremlinClient().getGraph(query);
-        } catch (GremlinClientException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
+        taskMonitor.setTitle("Expanding a single node");
     }
 
     @Override

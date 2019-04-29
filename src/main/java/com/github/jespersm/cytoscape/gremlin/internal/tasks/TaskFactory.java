@@ -43,4 +43,8 @@ public class TaskFactory {
     public AbstractImportTask createImportQueryTask(String networkName, ScriptQuery query, String visualStyle) {
         return new ImportQueryTask(services, networkName, visualStyle, new DefaultImportStrategy(), query);
     }
+
+    public AbstractExplainTask createExplainQueryTask(String networkName, ScriptQuery query, String visualStyle) {
+        return new ExplainQueryTask(services, networkName, visualStyle, new DefaultImportStrategy(), query);
+    }
 }

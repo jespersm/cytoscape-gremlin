@@ -12,6 +12,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.github.jespersm.cytoscape.gremlin.internal.Services;
+import com.github.jespersm.cytoscape.gremlin.internal.ui.DialogMethods;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tinkerpop.gremlin.driver.AuthProperties;
 import org.apache.tinkerpop.gremlin.driver.Client;
@@ -31,11 +33,15 @@ public class GremlinClient {
     private static final String HELLO = "hello";
     private static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(GremlinClient.class);
 
-    
+	private final transient Services services;
     private Cluster cluster;
     private GremlinGraphFactory gremlinGraphFactory = new GremlinGraphFactory();
 
 	private String alias = "g";
+
+	public GremlinClient(Services services) {
+		this.services = services;
+	}
 
 /*
     final static Class<?> SERIALIZER = org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV3d0.class;
@@ -102,9 +108,11 @@ public class GremlinClient {
 	}
 
 	private void ensureConnected() {
-		if (! isConnected()) { 
-    		throw new IllegalStateException("Not connected to cluster yet");
-    	}
+		if (isConnected()) { return ; }
+
+		if (!DialogMethods.connect(services)) {
+			throw new IllegalStateException("Not connected to cluster yet");
+		}
 	}
 
 	private <T> CompletableFuture<T> executeWithClient(Function<Client, CompletableFuture<T>> query, Client client) {
@@ -133,42 +141,46 @@ public class GremlinClient {
 		}
 	}
 
+	/**
+	 * Check all the conditions where the cluster is not open.
+	 * @return
+	 */
 	public boolean isConnected() {
-        return cluster != null && ! (cluster.isClosed() || cluster.isClosing());
-    }
-    
-    public List<Result> executeQuery(ScriptQuery query) throws GremlinClientException {
-        try {
-        	return executeQueryAsync(query).thenCompose(ResultSet::all).get();
-        } catch (Exception e) {
-            throw new GremlinClientException(e.getMessage(), e);
-        }
+    	if (cluster == null) return false;
+    	if (cluster.isClosed()) return false;
+    	if (cluster.isClosing()) return false;
+    	return true;
     }
 
-    public CompletableFuture<Graph> getGraphAsync(ScriptQuery query) {
-    	return executeQueryAsync(query)
-    			.thenApply(result -> result
+    public CompletableFuture<Graph> getGraphAsync(ScriptQuery query, AbstractGremlinGraphFactory creator) {
+		return executeQueryAsync(query)
+				.thenApply(result -> result
     					.stream()
-    					.map(gremlinGraphFactory::create)
+    					.map(r -> creator.create(r))
     					.collect(Collectors.toList()))
     			.thenApply(Graph::createFrom);
     }
 
-    public Graph getGraph(ScriptQuery query) throws GremlinClientException {
-        try {
-        	return getGraphAsync(query).get();
-        } catch (Exception e) {
-            throw new GremlinClientException(e.getMessage(), e);
-        }
-    }
+	public CompletableFuture<Graph>
+		explainQueryAsync(ScriptQuery query, AbstractGremlinGraphFactory creator)
+	{
+		RequestOptions.Builder builder = RequestOptions.build();
+		if (trimToNull(this.alias) != null) {
+			builder.addAlias("g", this.alias);
+		}
+		query.getParams().forEach((k, v) -> builder.addParameter(k, v));
 
-    public void explainQuery(ScriptQuery query) throws GremlinClientException {
-        try {
-            // TODO: session.run(query.getExplainQuery(), query.getParams());
-        } catch (Exception e) {
-            throw new GremlinClientException(e.getMessage(), e);
-        }
-    }
+		CompletableFuture<ResultSet> resultSet =
+				withClient(client -> client.submitAsync(query.getExplainQuery(), builder.create()));
+
+		return resultSet
+				.thenApply(result -> result
+						.stream()
+						.map(r -> creator.create(r))
+						.collect(Collectors.toList()))
+				.thenApply(Graph::createFrom);
+	}
+
 
     public void close() {
         if (isConnected()) {

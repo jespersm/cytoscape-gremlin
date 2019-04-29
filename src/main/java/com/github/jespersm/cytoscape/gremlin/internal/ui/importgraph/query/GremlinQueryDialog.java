@@ -20,13 +20,19 @@ import com.github.jespersm.cytoscape.gremlin.internal.ui.DialogMethods;
 @SuppressWarnings("serial")
 public class GremlinQueryDialog extends JDialog { //NOSONAR, hierarchy > 5
 
-    private static final String INITIAL_QUERY = "g.V().has(label, 'god')";
+    // private static final String INITIAL_QUERY = "g.V().has('name', 'Port1').valueMap('name').with(WithOptions.tokens)";
+    private static final String INITIAL_QUERY = "g.V().has('name', 'Port1').toList()";
     private String scriptQuery;
-    private boolean executeQuery;
+    private QType qtype;
     private final String[] visualStyles;
     private String network;
     private String visualStyleTitle;
-    private boolean explainQuery;
+
+    enum QType {
+        EXPLAIN,
+        EXECUTE,
+        CANCEL
+    }
 
     public GremlinQueryDialog(Frame owner, String[] visualStyles) {
         super(owner);
@@ -58,21 +64,21 @@ public class GremlinQueryDialog extends JDialog { //NOSONAR, hierarchy > 5
 
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> {
-            executeQuery = false;
+            qtype = QType.CANCEL;
             GremlinQueryDialog.this.dispose();
         });
-        JButton executButton = new JButton("Execute Query");
-        executButton.addActionListener(e -> {
-            executeQuery = true;
+        JButton executeButton = new JButton("Execute Query");
+        executeButton.addActionListener(e -> {
+            qtype = QType.EXECUTE;
             scriptQuery = queryText.getText();
             network = networkNameField.getText();
             visualStyleTitle = (String) visualStyleComboBox.getSelectedItem();
             GremlinQueryDialog.this.dispose();
         });
 
-        JButton explainButton = new JButton("Explain");
-        executButton.addActionListener(e -> {
-            explainQuery = true;
+        JButton explainButton = new JButton("Explain Query");
+        explainButton.addActionListener(e -> {
+            qtype = QType.EXPLAIN;
             scriptQuery = queryText.getText();
             network = networkNameField.getText();
             visualStyleTitle = (String) visualStyleComboBox.getSelectedItem();
@@ -89,8 +95,8 @@ public class GremlinQueryDialog extends JDialog { //NOSONAR, hierarchy > 5
         topPanel.add(visualStyleComboBox);
         queryPanel.add(queryTextScrollPane, BorderLayout.CENTER);
         buttonPanel.add(cancelButton);
-        //TODO: buttonPanel.add(explainButton);
-        buttonPanel.add(executButton);
+        buttonPanel.add(explainButton);
+        buttonPanel.add(executeButton);
 
         add(topPanel, BorderLayout.NORTH);
         add(queryPanel);
@@ -109,12 +115,8 @@ public class GremlinQueryDialog extends JDialog { //NOSONAR, hierarchy > 5
         return scriptQuery;
     }
 
-    public boolean isExecuteQuery() {
-        return executeQuery;
-    }
-
-    public boolean isExplainQuery() {
-        return explainQuery;
+    public QType whichQueryType() {
+        return this.qtype;
     }
 
     public String getNetwork() {

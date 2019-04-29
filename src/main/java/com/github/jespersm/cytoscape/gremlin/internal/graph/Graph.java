@@ -158,8 +158,8 @@ public class Graph implements GraphObject {
         }
 
         @Override
-        public void visit(GraphObjectList graphObjectList) {
-            graphObjectList.getList().forEach(o -> o.accept(this));
+        public void visit(GraphList graphList) {
+            graphList.getList().forEach(o -> o.accept(this));
         }
 
         @Override

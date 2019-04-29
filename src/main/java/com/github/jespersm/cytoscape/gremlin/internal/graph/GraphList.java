@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * This class represents a list of objects that are art of a graph.
  */
-public class GraphObjectList implements GraphObject {
+public class GraphList implements GraphObject {
 
     private List<GraphObject> list = new ArrayList<>();
 
@@ -24,7 +24,7 @@ public class GraphObjectList implements GraphObject {
         graphVisitor.visit(this);
     }
 
-    public void addAll(GraphObjectList that) {
+    public void addAll(GraphList that) {
         this.list.addAll(that.list);
     }
 }

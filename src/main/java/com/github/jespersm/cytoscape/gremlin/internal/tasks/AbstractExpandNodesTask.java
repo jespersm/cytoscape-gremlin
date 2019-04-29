@@ -1,10 +1,15 @@
 package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
+import org.codehaus.groovy.util.ListHashMap;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
@@ -23,12 +28,15 @@ import com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph.ImportGr
 
 public abstract class AbstractExpandNodesTask extends AbstractGremlinNetworkTask {
     private final ImportGraphStrategy importGraphStrategy;
-    private Direction direction;
+    private final Direction direction;
 
 	public enum Direction {
-		IN,
-		OUT,
-        BIDIRECTIONAL
+		IN(".inE()"),
+		OUT(".outE()"),
+        BIDIRECTIONAL(".bothE()");
+
+		public String step;
+        Direction(String step) { this.step = step; }
     }
 
     public AbstractExpandNodesTask(Services services, CyNetwork network, Direction direction) {
@@ -40,23 +48,27 @@ public abstract class AbstractExpandNodesTask extends AbstractGremlinNetworkTask
     abstract Stream<CyRow> getNodeRows();
         
     public void run(TaskMonitor taskMonitor) throws Exception {
-        taskMonitor.setTitle("Connecting nodes");
+        taskMonitor.setTitle("Expanding multiple nodes");
 
-        String ids = getNodeRows()
+        List<Integer> ids = getNodeRows()
         		.map(row -> row.get(this.importGraphStrategy.getRefIDName(),String.class))
-        		.map(AbstractGremlinTask::quote)
-        		.collect(Collectors.joining(", "));
+                .map(val -> Integer.parseInt(val) )
+                .collect(Collectors.toList());
 
         if (ids.isEmpty()) {
             taskMonitor.showMessage(Level.ERROR, "No nodes selected?");
             return;
         }
+        String query = new StringBuilder()
+                .append("g.V(ids).as('v')")
+                .append(this.direction.step).append(".as('e')")
+                .append(".otherV().as('o')")
+                .append(".select('v','e','o')")
+                .toString();
 
-        String dir = edgeDirectionQuery();
-
-        String query = "g.V(" + ids + ").as('v')." + dir + ".as('e').otherV().as('o').select('v','e','o')";
-        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
-        Graph graph = waitForRespose(scriptQuery, taskMonitor);
+        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).params("ids",ids).build();
+        Graph graph = waitForGraph(taskMonitor, scriptQuery, new GremlinGraphFactory(),
+                "problem connecting to server");
 
         taskMonitor.setStatusMessage("Importing from Gremlin server");
         ImportGraphToCytoscape importer = new ImportGraphToCytoscape(this.network, importGraphStrategy, () -> this.cancelled);
@@ -67,22 +79,6 @@ public abstract class AbstractExpandNodesTask extends AbstractGremlinNetworkTask
 
 //        reLayout();
     }
-
-	private String edgeDirectionQuery() {
-		String dir = "kaboom";
-        switch (this.direction) {
-        case IN:
-        	dir = "inE()";
-            break;
-        case OUT:
-        	dir = "outE()";
-            break;
-		default:
-			dir = "bothE()";
-			break;
-        }
-		return dir;
-	}
 
 	protected void reLayout() {
 		for (CyNetworkView cyNetworkView : this.services.getCyNetworkViewManager().getNetworkViews(network)) {

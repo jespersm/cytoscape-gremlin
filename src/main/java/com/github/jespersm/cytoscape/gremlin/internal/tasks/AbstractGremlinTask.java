@@ -5,6 +5,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.AbstractGremlinGraphFactory;
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.cytoscape.work.AbstractTask;
 import org.cytoscape.work.TaskMonitor;
 import org.cytoscape.work.TaskMonitor.Level;
@@ -22,27 +24,19 @@ public abstract class AbstractGremlinTask extends AbstractTask {
         this.services = services;
     }
 
-	protected Graph waitForRespose(ScriptQuery scriptQuery, TaskMonitor taskMonitor)
-			throws InterruptedException, ExecutionException {
-		return waitForRespose(scriptQuery, taskMonitor, "Error getting data from the Gremlin Server");
-	}
+	protected Graph waitForGraph(TaskMonitor taskMonitor, ScriptQuery scriptQuery,
+								 AbstractGremlinGraphFactory creator, String errorMessage)
+			throws ExecutionException, InterruptedException
+	{
+	    CompletableFuture<Graph> result =
+				CompletableFuture.supplyAsync(() -> getGraph(scriptQuery, creator));
 
-	protected Graph waitForRespose(ScriptQuery scriptQuery, TaskMonitor taskMonitor, String errorMessage)
-			throws InterruptedException, ExecutionException {
-		
-		CompletableFuture<Graph> result = CompletableFuture.supplyAsync(() -> getGraph(scriptQuery));
-		return waitForGraph(taskMonitor, errorMessage, result);
-	}
-
-	private Graph waitForGraph(TaskMonitor taskMonitor, String errorMessage, CompletableFuture<Graph> result)
-			throws ExecutionException, InterruptedException {
 		while (true) {
             if (this.cancelled) {
                 result.cancel(true);
             }
             try {
 				return result.get(100, TimeUnit.MILLISECONDS);
-				// If cancelled or failed, it will throw
 			} catch (TimeoutException e) {
 				// It's OK - loop!
 			} catch (ExecutionException e) {
@@ -60,16 +54,19 @@ public abstract class AbstractGremlinTask extends AbstractTask {
 		}
 	}
 
-    private Graph getGraph(ScriptQuery query) {
-        try {
-            return services.getGremlinClient().getGraph(query);
-        } catch (GremlinClientException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-    }
-    
-	protected static String quote(String s) {
-		return "\"" + s.replace("\"", "\\\"") + "\"";
+	private Graph getGraph(ScriptQuery query) {
+    	return getGraph(query, new GremlinGraphFactory());
+	}
+
+	private Graph getGraph(ScriptQuery query, AbstractGremlinGraphFactory creator) {
+		try {
+			return services
+					.getGremlinClient()
+					.getGraphAsync(query, creator)
+					.get();
+		} catch (Exception ex) {
+			throw new IllegalStateException(ex.getMessage(), ex);
+		}
 	}
 
 }

@@ -14,7 +14,7 @@ public interface GraphVisitor {
 
     void visit(GraphPath graphPath);
 
-    void visit(GraphObjectList graphObjectList);
+    void visit(GraphList graphList);
 
     void visit(Graph graph);
 }

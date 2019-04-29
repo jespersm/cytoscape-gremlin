@@ -1,5 +1,6 @@
 package com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph;
 
+import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
 import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNode;
@@ -12,6 +13,7 @@ import com.github.jespersm.cytoscape.gremlin.internal.tasks.querytemplate.mappin
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.querytemplate.mapping.GraphMapping;
 import com.github.jespersm.cytoscape.gremlin.internal.tasks.querytemplate.mapping.NodeColumnMapping;
 
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -27,7 +29,7 @@ public class GraphMappingImportStrategy implements ImportGraphStrategy {
     }
 
     @Override
-    public void createTables(CyNetwork network) {
+    public void createTables(CyNetwork network, Graph graph) {
         CyTable nodeTable = network.getDefaultNodeTable();
         CyTable edgeTable = network.getDefaultEdgeTable();
 
@@ -36,6 +38,7 @@ public class GraphMappingImportStrategy implements ImportGraphStrategy {
                 nodeTable.createColumn(nodeColumnMapping.getColumnName(), nodeColumnMapping.getColumnType(), true);
             }
         }
+
         for (EdgeColumnMapping<?> edgeColumnMapping : graphMapping.getEdgeColumnMapping()) {
             if (!columnExists(edgeTable, edgeColumnMapping.getColumnName())) {
                 edgeTable.createColumn(edgeColumnMapping.getColumnName(), edgeColumnMapping.getColumnType(), true);
@@ -114,4 +117,5 @@ public class GraphMappingImportStrategy implements ImportGraphStrategy {
     public String getRefIDName() {
         return null;
     }
+
 }

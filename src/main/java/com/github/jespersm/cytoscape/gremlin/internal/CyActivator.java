@@ -7,6 +7,7 @@ import static org.cytoscape.work.ServiceProperties.TITLE;
 
 import java.util.Properties;
 
+import com.github.jespersm.cytoscape.gremlin.internal.ui.expand.PropertyNodesMenuAction;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.event.CyEventHelper;
@@ -32,10 +33,8 @@ import com.github.jespersm.cytoscape.gremlin.internal.ui.expand.ExpandNodeEdgeMe
 import com.github.jespersm.cytoscape.gremlin.internal.ui.expand.ExpandNodeLabelMenuAction;
 import com.github.jespersm.cytoscape.gremlin.internal.ui.expand.ExpandNodeMenuAction;
 import com.github.jespersm.cytoscape.gremlin.internal.ui.expand.ExpandNodesMenuAction;
-import com.github.jespersm.cytoscape.gremlin.internal.ui.exportnetwork.ExportNetworkMenuAction;
 import com.github.jespersm.cytoscape.gremlin.internal.ui.importgraph.all.ImportAllNodesAndEdgesMenuAction;
 import com.github.jespersm.cytoscape.gremlin.internal.ui.importgraph.query.ImportGremlinQueryMenuAction;
-import com.github.jespersm.cytoscape.gremlin.internal.ui.shortestpath.ShortestPathMenuAction;
 
 /**
  * This class is the entrypoint of the application,
@@ -52,6 +51,7 @@ public class CyActivator extends AbstractCyActivator {
         appConfiguration.load();
         Services services = createServices(context);
 
+        // Connect to database
         ConnectInstanceMenuAction connectAction = ConnectInstanceMenuAction.create(services);
         ImportGremlinQueryMenuAction importGremlinQueryMenuAction = ImportGremlinQueryMenuAction.create(services);
         ImportAllNodesAndEdgesMenuAction importAllNodesAndEdgesMenuAction = ImportAllNodesAndEdgesMenuAction.create(services);
@@ -60,13 +60,18 @@ public class CyActivator extends AbstractCyActivator {
 //        ExportNetworkMenuAction exportNetworkToGremlinMenuAction = ExportNetworkMenuAction.create(services);
 //        registerAllServices(context, exportNetworkToGremlinMenuAction, new Properties());
 
+        // Load initial nodes via query
         registerAllServices(context, importGremlinQueryMenuAction, new Properties());
         registerAllServices(context, importAllNodesAndEdgesMenuAction, new Properties());
+
+
+        // Connect nodes, i.e. find connection between displayed nodes
+        ConnectNodesMenuAction connectNodesMenuAction;
 
         Properties expandProperties = new Properties();
         expandProperties.setProperty(PREFERRED_MENU, "Apps.Gremlin Queries");
         expandProperties.setProperty(TITLE, "Connect all nodes");
-        ConnectNodesMenuAction connectNodesMenuAction = ConnectNodesMenuAction.create(services, false);
+        connectNodesMenuAction = ConnectNodesMenuAction.create(services, false);
         registerAllServices(context, connectNodesMenuAction, expandProperties);
 
         expandProperties = new Properties();
@@ -75,10 +80,14 @@ public class CyActivator extends AbstractCyActivator {
         connectNodesMenuAction = ConnectNodesMenuAction.create(services, true);
         registerAllServices(context, connectNodesMenuAction, expandProperties);
 
+
+        // Expand nodes i.e. find edges on nodes and follow them
+        ExpandNodesMenuAction expandNodesMenuAction;
+
         expandProperties = new Properties();
         expandProperties.setProperty(PREFERRED_MENU, "Apps.Gremlin Queries");
         expandProperties.setProperty(TITLE, "Expand all nodes, bidirectional");
-        ExpandNodesMenuAction expandNodesMenuAction = ExpandNodesMenuAction.create(services, false, Direction.BIDIRECTIONAL);
+        expandNodesMenuAction = ExpandNodesMenuAction.create(services, false, Direction.BIDIRECTIONAL);
         registerAllServices(context, expandNodesMenuAction, expandProperties);
         expandProperties.setProperty(TITLE, "Expand all nodes, incoming only");
         expandNodesMenuAction = ExpandNodesMenuAction.create(services, false, Direction.IN);
@@ -99,11 +108,27 @@ public class CyActivator extends AbstractCyActivator {
         expandNodesMenuAction = ExpandNodesMenuAction.create(services, true, Direction.OUT);
         registerAllServices(context, expandNodesMenuAction, expandProperties);
 
-        Properties shortestPathProperties = new Properties();
-        shortestPathProperties.setProperty(PREFERRED_MENU, "Apps.Gremlin Queries");
-        shortestPathProperties.setProperty(TITLE, "Get shortest paths between selected nodes");
-        ShortestPathMenuAction shortestPathMenuAction = ShortestPathMenuAction.create(services);
+
+        // Properties on nodes i.e. find edges on nodes
+        PropertyNodesMenuAction propertyNodesMenuAction;
+
+        expandProperties = new Properties();
+        expandProperties.setProperty(PREFERRED_MENU, "Apps.Gremlin Queries");
+        expandProperties.setProperty(TITLE, "Obtain properties for all nodes");
+        propertyNodesMenuAction = PropertyNodesMenuAction.create(services, false);
+        registerAllServices(context, propertyNodesMenuAction, expandProperties);
+        expandProperties.setProperty(TITLE, "Obtain properties for selected nodes");
+        propertyNodesMenuAction = PropertyNodesMenuAction.create(services, true);
+        registerAllServices(context, propertyNodesMenuAction, expandProperties);
+
+
+        // Shortest Path
+//        Properties shortestPathProperties = new Properties();
+//        shortestPathProperties.setProperty(PREFERRED_MENU, "Apps.Gremlin Queries");
+//        shortestPathProperties.setProperty(TITLE, "Get shortest paths between selected nodes");
+//        ShortestPathMenuAction shortestPathMenuAction = ShortestPathMenuAction.create(services);
 //        registerAllServices(context, shortestPathMenuAction, shortestPathProperties);
+
 
         /*
          *  Context menus
@@ -130,12 +155,12 @@ public class CyActivator extends AbstractCyActivator {
         expandNodeMenuAction = ExpandNodeMenuAction.create(services, true, Direction.OUT);
         registerAllServices(context, expandNodeMenuAction, contextProperties);
 
-        contextProperties = new Properties();
-        contextProperties.setProperty(PREFERRED_MENU, "Gremlin");
-        contextProperties.setProperty(IN_CONTEXT_MENU, "true");
-        ExpandNodeEdgeMenuAction expandNodeEdgeMenuAction = new ExpandNodeEdgeMenuAction(services);
+//        contextProperties = new Properties();
+//        contextProperties.setProperty(PREFERRED_MENU, "Gremlin");
+//        contextProperties.setProperty(IN_CONTEXT_MENU, "true");
+//        ExpandNodeEdgeMenuAction expandNodeEdgeMenuAction = new ExpandNodeEdgeMenuAction(services);
 //        registerAllServices(context, expandNodeEdgeMenuAction, contextProperties);
-        ExpandNodeLabelMenuAction expandNodeLabelMenuAction = new ExpandNodeLabelMenuAction(services);
+//        ExpandNodeLabelMenuAction expandNodeLabelMenuAction = new ExpandNodeLabelMenuAction(services);
 //        registerAllServices(context, expandNodeLabelMenuAction, contextProperties);
 
     }
@@ -154,7 +179,7 @@ public class CyActivator extends AbstractCyActivator {
         services.setVisualMappingManager(getService(context, VisualMappingManager.class));
         services.setCyEventHelper(getService(context, CyEventHelper.class));
         services.setVisualStyleFactory(getService(context, VisualStyleFactory.class));
-        services.setGremlinClient(new GremlinClient());
+        services.setGremlinClient(new GremlinClient(services));
         services.setTaskFactory(TaskFactory.create(services));
         services.setTaskExecutor(TaskExecutor.create(services));
         return services;

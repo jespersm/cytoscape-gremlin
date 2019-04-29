@@ -24,7 +24,7 @@ public class ScriptQuery {
         return query;
     }
 
-    String getExplainQuery() {
+    public String getExplainQuery() {
         return query + ".explain()";
     }
 

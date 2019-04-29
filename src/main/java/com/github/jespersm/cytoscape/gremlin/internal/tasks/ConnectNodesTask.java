@@ -5,9 +5,11 @@ package com.github.jespersm.cytoscape.gremlin.internal.tasks;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.jespersm.cytoscape.gremlin.internal.client.GremlinGraphFactory;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.view.model.CyNetworkView;
@@ -45,19 +47,26 @@ public class ConnectNodesTask extends AbstractGremlinNetworkTask {
         List<CyRow> rows = this.network.getDefaultNodeTable().getAllRows();
         Stream<CyRow> rowStream = onlySelected ? getSelectedNodes() : rows.stream();
         
-        String idsQuery = rowStream
+        List<Integer> idsQuery = rowStream
         		.map(row -> row.get(this.importGraphStrategy.getRefIDName(),String.class))
-        		.map(AbstractGremlinTask::quote)
-        		.collect(Collectors.joining(", "));
+        		.map(val -> Integer.parseInt(val))
+        		.collect(Collectors.toList());
 
         if (idsQuery.isEmpty()) {
             taskMonitor.showMessage(Level.ERROR, "No nodes selected?");
             return;
         }
-        String query = "g.V(" + idsQuery + " ).bothE().where(__.otherV().hasId(" + idsQuery + ")).dedup()";
-        ScriptQuery scriptQuery = ScriptQuery.builder().query(query).build();
+        String query = new StringBuilder("g.V(idsQuery).as('v')")
+                .append(".bothE().where(__.otherV().hasId(idsQuery))")
+                .append(".dedup()")
+                .toString();
+        ScriptQuery scriptQuery = ScriptQuery.builder()
+                .query(query)
+                .params("idsQuery", idsQuery)
+                .build();
 
-        Graph graph = waitForRespose(scriptQuery, taskMonitor);
+        Graph graph = waitForGraph(taskMonitor, scriptQuery, new GremlinGraphFactory(),
+                "problem connecting to server");
 
         taskMonitor.setStatusMessage("Importing the Gremlin Graph");
         ImportGraphToCytoscape importer = new ImportGraphToCytoscape(this.network, importGraphStrategy, () -> this.cancelled);
@@ -65,14 +74,6 @@ public class ConnectNodesTask extends AbstractGremlinNetworkTask {
         importer.importGraph(graph);
 
         updateView();
-    }
-
-    private Graph getGraph(ScriptQuery query) {
-        try {
-            return services.getGremlinClient().getGraph(query);
-        } catch (GremlinClientException e) {
-            throw new IllegalStateException(e.getMessage(), e);
-        }
     }
 
 }

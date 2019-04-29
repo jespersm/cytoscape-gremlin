@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
     <groupId>com.github.jespersm</groupId>
     <artifactId>cytoscape-gremlin</artifactId>
-    <version>0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
     <name>Cytoscape Gremlin Client App</name>
 
 	<properties>

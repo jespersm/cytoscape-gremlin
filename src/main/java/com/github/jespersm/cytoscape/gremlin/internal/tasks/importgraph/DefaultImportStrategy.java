@@ -1,5 +1,9 @@
 package com.github.jespersm.cytoscape.gremlin.internal.tasks.importgraph;
 
+import com.github.jespersm.cytoscape.gremlin.internal.graph.Graph;
+import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphObject;
+
+import java.util.Map.Entry;
 import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyIdentifiable;
@@ -13,22 +17,13 @@ import com.github.jespersm.cytoscape.gremlin.internal.graph.GraphNode;
 import static com.github.jespersm.cytoscape.gremlin.internal.Constants.REF_ID;
 import static com.github.jespersm.cytoscape.gremlin.internal.Constants.CYCOLUMN_GREMLIN_LABEL;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
  * This class implements an import strategy that copies all labels and properties to cytoscape
  */
-/**
- * @param cyTable
- * @param cyId
- * @param key
- * @param value
- */
+
 public class DefaultImportStrategy implements ImportGraphStrategy {
 
 
@@ -44,22 +39,25 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
 
 
     @Override
-    public void createTables(CyNetwork network) {
+    public void createTables(CyNetwork network, Graph graphNode) {
         CyTable defNodeTab = network.getDefaultNodeTable();
-        if (defNodeTab.getColumn(REF_ID) == null) {
-            defNodeTab.createColumn(REF_ID, String.class, false);
-        }
-        if (defNodeTab.getColumn(CYCOLUMN_GREMLIN_LABEL) == null) {
-            defNodeTab.createColumn(CYCOLUMN_GREMLIN_LABEL, String.class, false);
+
+        createColumn(defNodeTab, REF_ID, String.class, false);
+        createColumn(defNodeTab, CYCOLUMN_GREMLIN_LABEL, String.class, false);
+        Collection<GraphNode> gn = graphNode.nodes();
+        for (GraphNode go : gn) {
+            Collection<Entry<String,Object>> entries = go.getProperties().entrySet();
+
+            for (Entry<String,Object> ent : entries) {
+                Object key = ent.getKey();
+                Class valClass = whatClass(ent.getValue());
+                createColumn(defNodeTab, key.toString(), valClass, false);
+            }
         }
 
         CyTable defEdgeTab = network.getDefaultEdgeTable();
-        if (defEdgeTab.getColumn(REF_ID) == null) {
-            defEdgeTab.createColumn(REF_ID, String.class, false);
-        }
-        if (defEdgeTab.getColumn(CYCOLUMN_GREMLIN_LABEL) == null) {
-            defEdgeTab.createColumn(CYCOLUMN_GREMLIN_LABEL, String.class, false);
-        }
+        createColumn(defEdgeTab, REF_ID, String.class, false);
+        createColumn(defEdgeTab, CYCOLUMN_GREMLIN_LABEL, String.class, false);
     }
 
     public String getRefIDName() {
@@ -69,7 +67,7 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
     public void copyNode(CyNetwork network, GraphNode graphNode) {
         String nodeId = graphNode.getProperties().getOrDefault(REF_ID, graphNode.getId()).toString();
         idMap.put(graphNode.getId(), nodeId);
-        nodeMap.putIfAbsent(nodeId, graphNode);
+        nodeMap.put(nodeId, graphNode);
     }
 
     public void copyEdge(CyNetwork network, GraphEdge graphEdge) {
@@ -89,12 +87,17 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
 
     }
 
+    /**
+     * When saving a node into the network the node may already exist.
+     * If that is the case the node is updated with its properties.
+     * Properties are not deleted but are over written.
+     *
+     * @param network
+     * @param graphNode
+     */
     private void saveNode(CyNetwork network, GraphNode graphNode) {
 
         String nodeId = graphNode.getProperties().getOrDefault(REF_ID, graphNode.getId()).toString();
-        if (nodeExists(network, nodeId)) {
-            return;
-        }
 
         CyTable cyTable = network.getDefaultNodeTable();
         CyNode cyNode = getOrCreateNode(network, nodeId);
@@ -114,7 +117,7 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
                 setEntry(cyTable, cyNode, entry.getKey(), entry.getValue());
             } else {
             	Object value = safeValue(entry.getValue());
-                createColumn(cyTable, entry.getKey(), value.getClass());
+                createColumn(cyTable, entry.getKey(), value.getClass(), true);
                 setEntry(cyTable, cyNode, entry.getKey(), value);
             }
         };
@@ -154,11 +157,11 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
             if (entry.getValue() instanceof List) {
                 @SuppressWarnings("unchecked")
                 String value = createJSONArray((List<Object>) entry.getValue());
-                createColumn(cyTable, entry.getKey(), value.getClass());
+                createColumn(cyTable, entry.getKey(), value.getClass(), true);
                 setEntry(cyTable, cyEdge, entry.getKey(), value);
             } else {
             	Object value = safeValue(entry.getValue());
-                createColumn(cyTable, entry.getKey(), value.getClass());
+                createColumn(cyTable, entry.getKey(), value.getClass(), true);
                 setEntry(cyTable, cyEdge, entry.getKey(), value);
             }
         }
@@ -166,23 +169,46 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
 
     /**
      * Return value which can be stored in Cytoscape
-     * 
+     *
      * @param o Value from graph
      * @return Integer, Boolean, Double, String or null
      */
     private Object safeValue(Object o) {
-		if (o instanceof String)
-			return o;
-		else if (o instanceof Integer)
-			return o;
-		else if (o instanceof Boolean)
-			return o;
-		else if (o instanceof Double)
-			return o;
-		else if (o instanceof Long)
-			return o;
-		else
-			return Objects.toString(o, "<null>");
+        if (o instanceof String)
+            return o;
+        else if (o instanceof Integer)
+            return o;
+        else if (o instanceof Boolean)
+            return o;
+        else if (o instanceof Double)
+            return o;
+        else if (o instanceof Long)
+            return o;
+        else
+            return Objects.toString(o, "<null>");
+    }
+
+    /**
+     * Return value which can be stored in Cytoscape
+     *
+     * @param o Value from graph
+     * @return Integer, Boolean, Double, String or null
+     */
+    private Class whatClass(Object o) {
+        if (o instanceof String)
+            return String.class;
+        else if (o instanceof Integer)
+            return Integer.class;
+        else if (o instanceof Boolean)
+            return Boolean.class;
+        else if (o instanceof Double)
+            return Double.class;
+        else if (o instanceof Long)
+            return Long.class;
+        else if (o instanceof List)
+            return whatClass(((List) o).get(0));
+        else
+            return Object.class;
     }
     
     private boolean edgeExists(CyNetwork network, Object id) {
@@ -205,10 +231,9 @@ public class DefaultImportStrategy implements ImportGraphStrategy {
         return cyNode;
     }
 
-    private void createColumn(CyTable cyTable, String key, Class<?> type) {
-        if (cyTable.getColumn(key) == null) {
-            cyTable.createColumn(key, type, true);
-        }
+    private void createColumn(CyTable cyTable, String key, Class<?> type, Boolean b) {
+        if (cyTable.getColumn(key) != null) { return; }
+        cyTable.createColumn(key, type, b);
     }
 
     private void createListColumn(CyTable cyTable, String key, Class<?> type) {
