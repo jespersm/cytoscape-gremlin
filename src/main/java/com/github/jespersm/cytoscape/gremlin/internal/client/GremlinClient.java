@@ -60,8 +60,8 @@ public class GremlinClient {
         	}
         	String userName = StringUtils.trimToNull(connectionParameter.getUsername());
 			if (userName != null) {
-        		builder = builder.authProperties(new AuthProperties().with(USERNAME, userName));
-        		builder = builder.authProperties(new AuthProperties().with(PASSWORD, connectionParameter.getPasswordAsString()));
+        		builder = builder.authProperties(new AuthProperties().with(USERNAME, userName)
+				                                                     .with(PASSWORD, connectionParameter.getPasswordAsString()));
         	}
 			
 	        HashMap<String, Object> configMap = new HashMap<>();
